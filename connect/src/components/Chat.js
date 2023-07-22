@@ -12,7 +12,6 @@ const Chat = () => {
   const [input, setInput] = useState("");
   const [roomName, setRoomName] = useState("");
   const [messages, setMessages] = useState([]);
-  const [upDate, setUpDate] = useState("");
   const [seed, setSeed] = useState("");
   const { roomId } = useParams();
 
@@ -21,13 +20,13 @@ const Chat = () => {
     if (roomId) {
       axios.get(`/room/${roomId}`).then((response) => {
         setRoomName(response.data.name);
-        setUpDate(response.data.updatedAt);
       });
       axios.get(`/messages/${roomId}`).then((response) => {
         setMessages(response.data);
       });
     }
   }, [roomId]);
+
   useEffect(() => {
     setSeed(Math.floor(Math.random() * 5000));
   }, [roomId]);
@@ -64,7 +63,7 @@ const Chat = () => {
       channel.unsubscribe();
     };
   }, []);
-  console.log(roomName);
+
   return (
     <div className="chatContainer">
       <div className="chatHeader">
@@ -72,8 +71,8 @@ const Chat = () => {
         <div className="chatHeaderinfo">
           <h2>{roomName ? roomName : "Welcome to Connect via chat"}</h2>
           <p>
-            {upDate
-              ? `last seen at ${new Date(upDate).toString().slice(0, 25)}`
+            {roomName
+              ? "last seen - just now"
               : "click a group to start a chat"}
           </p>
         </div>
