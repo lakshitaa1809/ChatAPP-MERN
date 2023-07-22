@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import express from "express";
 import dbMessages from "./dbMessages.js";
+import dbRooms from "./dbRooms.js";
 import Pusher from "pusher";
 import cors from "cors";
 const app = express();
@@ -33,26 +34,55 @@ mongoose
 const db = mongoose.connection;
 db.once("open", () => {
   console.log("DB created");
+  const roomCollection = db.collection("rooms");
+  const changeStream = roomCollection.watch();
 
-  const msgBox = db.collection("messagecontents");
-  const changeStream = msgBox.watch();
   changeStream.on("change", (change) => {
-    console.log("A change occured", change);
+    console.log(change);
+    if (change.operationType === "insert") {
+      const roomDetails = change.fullDocument;
+      pusher.trigger("room", "inserted", roomDetails);
+    } else {
+      console.log("Not a expected event to trigger");
+    }
+  });
+
+  const msgCollection = db.collection("messages");
+  const changeStream1 = msgCollection.watch();
+
+  changeStream1.on("change", (change) => {
+    console.log(change);
     if (change.operationType === "insert") {
       const messageDetails = change.fullDocument;
-      pusher.trigger("messages", "inserted", {
-        name: messageDetails.name,
-        message: messageDetails.message,
-        timestamp: messageDetails.timestamp,
-        received: messageDetails.received,
-      });
+      pusher.trigger("messages", "inserted", messageDetails);
     } else {
-      console.log("Error triggering pusher");
+      console.log("Not a expected event to trigger");
     }
   });
 });
 
-app.get("/", (req, res) => res.status(200).send("hello world"));
+app.post("/group/create", (req, res) => {
+  const name = req.body.groupname;
+  dbRooms.create({ name }, (err, data) => {
+    if (err) {
+      return res.status(500).send(err);
+    } else {
+      return res.status(201).send(data);
+    }
+  });
+});
+
+app.post("/new/room", (req, res) => {
+  const dbRoom = req.body;
+  dbRooms.create(dbRoom, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(201).send(data);
+    }
+  });
+});
+
 app.get("/messages/find", (req, res) => {
   dbMessages.find((err, data) => {
     if (err) {
@@ -69,6 +99,33 @@ app.post("/messages/new", (req, res) => {
       res.status(500).send(err);
     } else {
       res.status(201).send(data);
+    }
+  });
+});
+app.get("/all/rooms", (req, res) => {
+  dbRooms.find((err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data);
+    }
+  });
+});
+app.get("/room/:id", (req, res) => {
+  dbRooms.find({ _id: req.params.id }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data[0]);
+    }
+  });
+});
+app.get("/messages/:id", (req, res) => {
+  dbMessages.find({ roomId: req.params.id }, (err, data) => {
+    if (err) {
+      res.status(500).send(err);
+    } else {
+      res.status(200).send(data);
     }
   });
 });

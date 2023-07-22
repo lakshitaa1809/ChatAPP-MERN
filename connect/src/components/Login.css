@@ -1,0 +1,31 @@
+.login_container {
+  background-color: #f8f8f8;
+  height: 100vh;
+  width: 100vw;
+  display: grid;
+  place-items: center;
+}
+
+.login {
+  padding: 50px;
+  text-align: center;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.loginimg {
+  object-fit: contain;
+  height: 300px;
+  margin-bottom: 40px;
+}
+
+.signin {
+  margin-top: 50px;
+  padding: 10px 10px;
+  text-transform: inherit !important;
+  background-color: #0a8d48 !important;
+  color: white;
+  border: 1px solid #0a8d48;
+  border-radius: 5px;
+}

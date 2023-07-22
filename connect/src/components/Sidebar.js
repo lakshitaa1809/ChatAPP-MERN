@@ -1,17 +1,41 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { Avatar, IconButton, Button } from "@mui/material";
+import { Avatar, IconButton } from "@mui/material";
 import DonutLargeIcon from "@mui/icons-material/DonutLarge";
 import ChatIcon from "@mui/icons-material/Chat";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
 import SearchIcon from "@mui/icons-material/Search";
 import SidebarChat from "./SidebarChat";
-
+import { useStateValue } from "./StateProvider";
+import axios from "../axios";
+import Pusher from "pusher-js";
 const Sidebar = () => {
+  const [{ user }] = useStateValue();
+  const [rooms, setRooms] = useState([]);
+  useEffect(() => {
+    axios.get("/all/rooms").then((response) => setRooms(response.data));
+  }, []);
+  console.log(rooms);
+  useEffect(() => {
+    const pusher = new Pusher("48316281dd4ad140e510", {
+      cluster: "ap2",
+    });
+
+    const channel = pusher.subscribe("room");
+    channel.bind("inserted", function (room) {
+      // alert(JSON.stringify(newMessage));
+      setRooms((prevRooms) => [...prevRooms, room]);
+    });
+
+    return () => {
+      channel.unbind_all();
+      channel.unsubscribe();
+    };
+  }, []);
   return (
     <Sidebarcontainer>
       <Sidebarheader>
-        <UserAvatar>S</UserAvatar>
+        <Avatar src={user.photoURL} />
         <Sidebarheaderright>
           <IconButton>
             <DonutLargeIcon />
@@ -30,11 +54,12 @@ const Sidebar = () => {
           <Input placeholder="Search in Chats" />
         </Search>
       </Sidebarsearch>
-      <SidebarButton>Start a New Chat</SidebarButton>
+
       <Sidechats>
-        <SidebarChat />
-        <SidebarChat />
-        <SidebarChat />
+        <SidebarChat addNewChat />
+        {rooms.map((room) => (
+          <SidebarChat key={room._id} id={room._id} name={room.name} />
+        ))}
       </Sidechats>
     </Sidebarcontainer>
   );
@@ -59,12 +84,7 @@ const Sidebarheaderright = styled.div`
   margin-left: 30px;
   min-width: 10vw;
 `;
-const UserAvatar = styled(Avatar)`
-  cursor: pointer;
-  :hover {
-    opacity: 0.8;
-  }
-`;
+
 const Sidebarsearch = styled.div`
   display: flex;
   align-items: center;
@@ -88,13 +108,7 @@ const Input = styled.input`
   outline-width: 0;
   margin-left: 50px;
 `;
-const SidebarButton = styled(Button)`
-  display: flex;
-  align-items: center;
-  width: 90%;
 
-  margin-top: 10px;
-`;
 const Sidechats = styled.div`
   width: 96%;
   flex: 1;

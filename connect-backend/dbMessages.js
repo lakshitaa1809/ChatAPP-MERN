@@ -5,5 +5,7 @@ const chatSchema = mongoose.Schema({
   name: String,
   timestamp: String,
   received: Boolean,
+  uid: String,
+  roomId: String,
 });
-export default mongoose.model("messagecontents", chatSchema);
+export default mongoose.model("Messages", chatSchema);
